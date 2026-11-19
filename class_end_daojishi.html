@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>下课倒计时</title>
+
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #000000;
+        }
+
+        @font-face {
+            font-family: 'Digital-7 Mono';
+            src: url('/digital-7-mono-subset') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'GB18030 Bitmap';
+            src: url('/GB18030-Bitmap') format('truetype');
+        }
+
+        h1 {
+            color: #00ff00;
+            text-shadow: 0 0 10px #00c800;
+            margin: 20px;
+        }
+
+        h1.time {
+            font-size: 150px;
+            font-family: 'Digital-7 Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, monospace;
+        }
+
+        h1.title {
+            font-size: 70px;
+            font-family: "GB18030 Bitmap", "SimSun", monospace;
+            -webkit-font-smoothing: none;
+        }
+
+        h1.doneTips {
+            font-size: 120px;
+            font-family: "GB18030 Bitmap", "SimSun", monospace;
+            -webkit-font-smoothing: none;
+        }
+    </style>
+</head>
+<body>
+<h1 class="title" id="leftTitle">距离下课还有</h1>
+<h1 id="TimeLeftText" class="time">--:--:--</h1>
+<h1 id="doneTips" hidden class="doneTips">已经下课啦</h1>
+
+<script>
+    const schedule = [
+        {name: "早读", start: "07:50", end: "08:15", isClass: true},
+        {name: "第一节", start: "08:20", end: "09:00", isClass: true},
+        {name: "第二节", start: "09:10", end: "09:50", isClass: true},
+        {name: "大课间", start: "09:50", end: "10:15", isClass: true},
+        {name: "第三节", start: "10:15", end: "10:55", isClass: true},
+        {name: "第四节", start: "11:00", end: "11:40", isClass: true},
+        {name: "午餐午休", start: "11:45", end: "13:55", isClass: true},
+        {name: "第五节", start: "14:00", end: "14:40", isClass: true},
+        {name: "眼保健操", start: "14:40", end: "14:45", isClass: true},
+        {name: "第六节", start: "14:50", end: "15:30", isClass: true},
+        {name: "第七节", start: "15:40", end: "16:20", isClass: true},
+        {name: "第八节", start: "16:25", end: "17:40", isClass: true},
+    ];
+
+    // 2. 辅助函数：把 "08:30" 转成今天的具体时间对象
+    function parseTime(timeStr) {
+        const [h, m] = timeStr.split(':').map(Number);
+        const d = new Date();
+        d.setHours(h, m, 0, 0);
+        return d;
+    }
+
+    // 3. 核心判断函数
+    function getClassEndTime() {
+        const now = new Date();
+
+        for (let i = 0; i < schedule.length; i++) {
+            const item = schedule[i];
+            const startTime = parseTime(item.start);
+            const endTime = parseTime(item.end);
+
+            // 如果现在处于这个时间段内
+            if (now >= startTime && now < endTime) {
+                if (item.isClass) {
+                    return endTime.toLocaleTimeString();
+                } else {
+                    return 'classEnded';
+                }
+            }
+        }
+
+        return 'classEnded';
+    }
+
+    function getTimeLeft(targetTimeStr) {
+        // 1. 获取当前时间
+        const now = new Date();
+
+        // 2. 把 "14:30:00" 这种时分秒字符串，转成今天的 Date 对象
+        const [hours, minutes, seconds] = targetTimeStr.split(':').map(Number);
+        const target = new Date();
+        target.setHours(hours, minutes, seconds, 0);
+
+        // 3. 如果目标时间已经过了，就默认算到明天的这个时间
+        if (target <= now) {
+            target.setDate(target.getDate() + 1);
+        }
+
+        // 4. 算差值（毫秒）
+        let diff = target - now;
+
+        // 5. 换算成时、分、秒
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        diff -= h * 1000 * 60 * 60;
+
+        const m = Math.floor(diff / (1000 * 60));
+        diff -= m * 1000 * 60;
+
+        const s = Math.floor(diff / 1000);
+
+        // 6. 返回格式化的结果（补零）
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateText() {
+        setTimeout(updateText, 100);
+
+        // 1. 获取下课时间
+        const class_end_time = getClassEndTime();
+        console.log('class_end_time=', class_end_time);
+        if (class_end_time === 'classEnded') {
+            document.getElementById('leftTitle').hidden = true;
+            document.getElementById('TimeLeftText').hidden = true;
+            document.getElementById('doneTips').hidden = false;
+            return;
+        }
+
+        // 2. 获取剩余时间并显示
+        document.getElementById('leftTitle').hidden = false;
+        document.getElementById('TimeLeftText').hidden = false;
+        document.getElementById('doneTips').hidden = true;
+        document.getElementById('TimeLeftText').textContent = getTimeLeft(class_end_time);
+    }
+
+    setTimeout(updateText, 100);
+</script>
+</body>
+</html>

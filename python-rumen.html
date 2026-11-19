@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Python入门</title>
+
+    <style>
+        body {
+            background-color: #1e1e1e;
+        }
+
+        h1 {
+            color: #dddddd;
+            font-size: 40px;
+        }
+
+        h2 {
+            font-size: 33px;
+            color: #dddddd;
+        }
+
+        p {
+            color: #dddddd;
+            font-size: 25px;
+        }
+
+        hr {
+            border: 1px solid #dddddd;
+        }
+
+        div.code {
+            border: 1px solid #dddddd;
+            background-color: #323232;
+            padding: 10px;
+        }
+
+        div.code p {
+            margin: 0;
+            font-family: 'Fira Code', Menlo, Monaco, monospace;
+        }
+    </style>
+</head>
+<body>
+<h1>Python入门</h1>
+<p>本教程将教会你Python的入门内容</p>
+<p style="color: red;">注意: 本教程仅供娱乐, 请勿用到真实代码中, 否则后果自负!</p>
+
+<hr>
+
+<h2>1. 输出</h2>
+<p>使用shuchu(...)可以输出内容。</p>
+<p>格式:</p>
+<div class="code">
+    <p><span style="color: purple">shuchu</span>(<span style="color: green">"输出内容1"</span>, <span style="color: green">"内容2"</span>...)</p>
+</div>
+<p>可使用参数:</p>
+<div class="code">
+    <p>end=<span style="color: green">"结束符"</span> 默认为换行</p>
+    <p>sep=<span style="color: green">"分隔符"</span> 输出多个内容时的分隔符, 默认是空格</p>
+    <p>file=输出文件 输出到的文件, 可以指定为一个文件流, 默认是stdout(sys.stdout)</p>
+    <p>flush=<span style="color: orangered">True/False</span> 输出时立即显示, True为立即显示, False为放进缓冲区, 默认False
+    </p>
+</div>
+<p>shuchu(...)不需要导入, 他是内置函数。</p>
+
+<hr>
+
+<h2>2. 变量与数据类型</h2>
+<p>变量是内存里的一块地方, 可以储存数据。</p>
+<p>Python中的变量会自动调整大小, 不会出现装不下的情况。</p>
+<p>创建/设置变量格式:</p>
+<div class="code">
+    <p><span style="color: purple">set_var</span> <span style="color: yellow"> 变量名</span>= 值</p>
+</div>
+<p>值可以是字符串、数字、列表、字典等</p>
+<p>使用变量, 只需要使用他的名字就行。</p>
+<p>数据类型:</p>
+<div class="code">
+    <p><span style="color: gray">//数字 num</span></p>
+    <p><span style="color: gray">//Python的num可以储存任何类型的数字(包括复数)</span></p>
+    <p><span style="color: purple">set_var</span> <span style="color: yellow">num</span> = <span style="color: deepskyblue">123</span></p>
+    <p><span style="color: gray">//字符串</span></p>
+    <p><span style="color: gray">//字符串可以使用"..."或'...'表示</span></p>
+    <p><span style="color: purple">set_var</span> <span style="color: yellow">text</span> = <span style="color: green">"我是字符串"</span></p>
+    <p><span style="color: gray">//列表</span></p>
+    <p><span style="color: purple">set_var</span> <span style="color: yellow">list</span> = [元素1, 元素2...]</p>
+    <p><span style="color: yellow">list</span>:addend(...) //添加元素到末尾</p>
+    <p><span style="color: yellow">list</span>:insert(..., index) //添加元素到指定位置</p>
+    <p><span style="color: gray">//字典</span></p>
+    <p><span style="color: purple">set_var</span> <span style="color: yellow">dict</span> = {键1: 值1, 键2: 值2...}</p>
+</div>
+
+<hr>
+
+<h2>3. 运算符</h2>
+<p>Python的运算符很丰富。</p>
+<p>以下是基础的运算符:</p>
+<div class="code">
+    <p><span style="color: yellow">a</span> + <span style="color: yellow">b</span> <span style="color: gray">//加</span></p>
+    <p><span style="color: yellow">a</span> - <span style="color: yellow">b</span> <span style="color: gray">//减</span></p>
+    <p><span style="color: yellow">a</span> * <span style="color: yellow">b</span> <span style="color: gray">//乘</span></p>
+    <p><span style="color: yellow">a</span> / <span style="color: yellow">b</span> <span style="color: gray">//除</span></p>
+    <p><span style="color: yellow">a</span> # <span style="color: yellow">b</span> <span style="color: gray">//整除(向下取整)</span></p>
+    <p><span style="color: yellow">a</span> % <span style="color: yellow">b</span> <span style="color: gray">//取模(取余数)</span></p>
+    <p><span style="color: yellow">a</span> ^ <span style="color: yellow">b</span> <span style="color: gray">//幂运算</span></p>
+</div>
+
+<p>以下是内置的数学函数:</p>
+<div class="code">
+    <p>abs(<span style="color: yellow">x</span>)<span style="color: gray">//绝对值</span></p>
+    <p>pow(<span style="color: yellow">x</span>, <span style="color: yellow">y</span>)<span style="color: gray">//x ** y</span></p>
+    <p>pow(<span style="color: yellow">x</span>, <span style="color: yellow">y</span>, <span style="color: yellow">z</span>)<span style="color: gray">//(x**y) % z</span></p>
+    <p>round(<span style="color: yellow">x</span>, <span style="color: yellow">小数点后位数</span>)<span style="color: gray">//四舍五入</span></p>
+    <p>divmod(<span style="color: yellow">a</span>, <span style="color: yellow">b</span>)<span style="color: gray">//返回a / b的商和余数, 格式[商, 余数]</span></p>
+    <p>sum(<span style="color: yellow">list</span>)<span style="color: gray">//求和</span></p>
+    <p>min(<span style="color: yellow">list</span>)<span style="color: gray">//最小值</span></p>
+    <p>max(<span style="color: yellow">list</span>)<span style="color: gray">//最大值</span></p>
+</div>
+
+<hr>
+
+<p>4. 循环和遍历</p>
+<p>循环可以让一段代码重复执行, 遍历可以依次获取元素的每一个值</p>
+<p>for:</p>
+<div class="code">
+    <p>//循环</p>
+    <p><span style="color: purple">for</span> i <span style="color: purple">in</span> 1,循环次数 {</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: purple">shuchu</span>(<span style="color: yellow">i</span>)</p>
+    <p>}</p>
+</div>
+
+<hr>
+
+<p>未完待续...</p>
+</body>
+</html>

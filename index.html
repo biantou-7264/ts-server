@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>锋景罗的网站</title>
+
+    <style>
+        body {
+            background: darkred;
+        }
+
+        h1 {
+            margin: 10px;
+            color: white;
+            font-size: 40px;
+        }
+
+        hr {
+            margin: 10px;
+            border: 1px solid white;
+        }
+
+        button {
+            margin: 10px;
+            color: white;
+            background-color: #007f00;
+            box-shadow: 0 5px 0 #006400;
+            border-radius: 10px;
+            border: 2px solid #00ff00;
+            cursor: pointer;
+            font-size: 20px;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+
+        button:hover {
+            background-color: #009f00;
+        }
+
+        button:active {
+            background-color: #007f00;
+            border: #00d800 2px solid;
+            box-shadow: 0 0 0 #006400;
+            transform: translateY(5px);
+        }
+
+        button.noClick {
+            background-color: #c80000;
+            border: #ff3232 2px solid;
+            box-shadow: 0 5px 0 #640000;
+        }
+
+        button.noClick:hover {
+            background-color: #d80000;
+            border: #ff6464 2px solid;
+        }
+
+        button.noClick:active {
+            background-color: #7f0000;
+            border: #d80000 2px solid;
+            box-shadow: 0 0 0 #640000;
+            transform: translateY(5px);
+        }
+    </style>
+</head>
+<body>
+<h1>锋景罗的网站</h1>
+<hr>
+<button onclick="location.href='/say_room'">简易聊天室</button>
+<!-- <button onclick="location.href='/mc'">从某网站下载的我的世界</button> -->
+<button onclick="location.href='/python-rumen'">Python入门教程(仅供娱乐)</button>
+<button onclick="location.href='/class_end_daojishi'">下课倒计时</button>
+<button onclick="location.href='/shared'">共享的文件</button>
+<button onclick="location.href='/love-eyes-exercise'">爱眼体操</button>
+<button onclick="location.href='/browser'">简易浏览器</button>
+<br>
+<button onclick="location.href='/fuck-box'">意见反馈</button>
+<button onclick="location.href='/lianxi_me'">联系作者</button>
+<button onclick="boomSpaceBtnClick()" id="boom-space">我是占位置的</button>
+<button onclick="location.href='/no-click-page'" class="noClick">千万别点我</button>
+<!-- <button onclick="location.href='/admin'">网站后台</button> -->
+
+<script>
+    window.boomSpaceBtnClickCount = 0;
+    function boomSpaceBtnClick() {
+        boomSpaceBtnClickCount++;
+        if (boomSpaceBtnClickCount === 1) {
+            document.getElementById('boom-space').textContent = "我真的是占位置的";
+        } else if (boomSpaceBtnClickCount === 2) {
+            document.getElementById('boom-space').textContent = "能不能别点我";
+        } else if (boomSpaceBtnClickCount === 3) {
+            document.getElementById('boom-space').textContent = "真的别点我啊";
+        } else if (boomSpaceBtnClickCount === 4) {
+            document.getElementById('boom-space').textContent = "不要再点我了";
+        } else if (boomSpaceBtnClickCount === 5) {
+            document.getElementById('boom-space').textContent = "再点我,我就生气了";
+        } else if (boomSpaceBtnClickCount === 6) {
+            document.getElementById('boom-space').textContent = "不许点我!";
+        } else if (boomSpaceBtnClickCount === 7) {
+            document.getElementById('boom-space').textContent = "啊啊啊啊!";
+        } else {
+            document.getElementById('boom-space').style.display = "none";
+        }
+    }
+</script>
+</body>
+</html>

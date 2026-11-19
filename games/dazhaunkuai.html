@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打砖块</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b0f1c 0%, #1a1f2f 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 16px;
+        }
+        .game-wrapper {
+            background: #11141f;
+            padding: 20px 20px 24px;
+            border-radius: 42px;
+            border: 1px solid #2d3347;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 0 8px;
+        }
+        .score-panel {
+            background: #1d222f;
+            padding: 8px 22px;
+            border-radius: 60px;
+            color: #b7e1f7;
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            background: #232a3b;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 22px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #dbeafe;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #3e4a60;
+            border-bottom: 2px solid #0d1019;
+        }
+        .btn:active {
+            background: #d0a81a;
+        }
+        .btn.pause-active:active {
+            background: #d0a81a;
+        }
+        .btn.pause-active {
+            background: #4f3b1f;
+            color: #ffda8f;
+            border-top-color: #7a5d2e;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 24px;
+            background: #0e101a;
+            width: 800px;
+            height: 500px;
+            cursor: none;
+        }
+        .footer-tip {
+            text-align: center;
+            margin-top: 12px;
+            color: #6f7c94;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<div class="game-wrapper">
+    <div class="header">
+        <div class="score-panel">分数 <span id="scoreDisplay">0</span></div>
+        <div class="controls">
+            <button class="btn" id="pauseBtn">暂停</button>
+            <button class="btn" id="resetBtn">重来</button>
+        </div>
+    </div>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div class="footer-tip">方向键移动挡板 空格键暂停/继续</div>
+</div>
+
+<script>
+    (function() {
+        // ---------- 画布与上下文 ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreSpan = document.getElementById('scoreDisplay');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // ---------- 固定尺寸参数 ----------
+        const CW = 800, CH = 500;           // 画布宽高
+        const BALL_RADIUS = 7;              // 球半径
+        const PADDLE_W = 100, PADDLE_H = 16;
+        const PADDLE_Y = CH - 40;           // 挡板 Y 坐标(顶部)
+        const PADDLE_SPEED = 8;             // 键盘移动速度
+
+        // ---------- 游戏状态 ----------
+        let score = 0;
+        let gameActive = true;               // 是否运行(true 表示未暂停, 物理更新)
+        let animationFrame = null;
+
+        // ---------- 挡板 ----------
+        let paddleX = (CW - PADDLE_W) / 2;
+
+        // ---------- 球 ----------
+        let ball = {
+            x: CW / 2,
+            y: CH - 80,          // 初始位置略高于挡板
+            dx: 1,
+            dy: -2,
+            r: BALL_RADIUS
+        };
+
+        // 记录球是否处于“等待发球”的粘性状态(第一次移动前)
+        // 但为了即开即玩，我们直接给球速度，不用粘性
+
+        // ---------- 砖块 ----------
+        const BRICK_ROWS = 5;
+        const BRICK_COLS = 10;
+        const BRICK_W = 68;
+        const BRICK_H = 22;
+        const BRICK_GAP = 8;
+        const BRICK_OFFSET_TOP = 60;
+        const BRICK_OFFSET_LEFT = (CW - (BRICK_COLS * (BRICK_W + BRICK_GAP) - BRICK_GAP)) / 2;
+
+        let bricks = [];
+
+        // 初始化/重置砖块 (全满)
+        function initBricks() {
+            bricks = [];
+            for (let row = 0; row < BRICK_ROWS; row++) {
+                for (let col = 0; col < BRICK_COLS; col++) {
+                    const brickX = BRICK_OFFSET_LEFT + col * (BRICK_W + BRICK_GAP);
+                    const brickY = BRICK_OFFSET_TOP + row * (BRICK_H + BRICK_GAP);
+                    // 颜色按行变化
+                    let randomColor = "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+                    bricks.push({
+                        x: brickX,
+                        y: brickY,
+                        w: BRICK_W,
+                        h: BRICK_H,
+                        active: true,
+                        color: randomColor,
+                        lightColor: randomColor
+                    });
+                }
+            }
+        }
+
+        // ---------- 重置球(丢球或重置游戏时调用) ----------
+        function resetBall() {
+            ball.x = CW / 2;
+            ball.y = CH - 80;
+            // 随机水平方向，但保证有一定角度
+            const angle = (Math.random() * 0.6 - 0.3) + Math.PI / 3; // 主要向上，左右随机
+            const speed = 6.5;
+            ball.dx = Math.cos(angle) * speed * 0.9;
+            ball.dy = -Math.sin(angle) * speed;  // 确保向上
+            // 防止过于水平
+            if (Math.abs(ball.dx) < 2.5) {
+                ball.dx = (ball.dx > 0 ? 1 : -0.5);
+            }
+            // 确保向上
+            if (ball.dy > -1) ball.dy = -1;
+        }
+
+        // ---------- 重置整个游戏(保留分数? 新游戏分数归零) ----------
+        function resetGame() {
+            score = 0;
+            updateScore();
+            paddleX = (CW - PADDLE_W) / 2;
+            initBricks();
+            resetBall();
+            // 如果暂停状态，重置时自动恢复运行(但保留暂停按钮的状态)
+            if (!gameActive) {
+                // 如果当前是暂停，重置后仍然暂停? 更合理是重置后游戏运行
+                // 我们可以让重置后继续运行(但用户可能期望暂停状态保留? 这里设计重置后回到运行)
+                gameActive = true;
+                updatePauseButton();
+            }
+            // 取消任何引用，用新循环即可 (动画循环已在运行)
+        }
+
+        // ---------- 分数更新 ----------
+        function updateScore() {
+            scoreSpan.textContent = score;
+        }
+
+        // ---------- 暂停按钮UI同步 ----------
+        function updatePauseButton() {
+            if (gameActive) {
+                pauseBtn.innerHTML = '⏸️ 暂停';
+                pauseBtn.classList.remove('pause-active');
+            } else {
+                pauseBtn.innerHTML = '▶️ 继续';
+                pauseBtn.classList.add('pause-active');
+            }
+        }
+
+        // ---------- 暂停切换 ----------
+        function togglePause() {
+            gameActive = !gameActive;
+            updatePauseButton();
+        }
+
+        // ---------- 碰撞检测: 球与矩形(砖块) ----------
+        function ballCollidesWithBrick(b) {
+            // 砖块矩形
+            const brickLeft = b.x;
+            const brickRight = b.x + b.w;
+            const brickTop = b.y;
+            const brickBottom = b.y + b.h;
+
+            // 球心坐标
+            const ballX = ball.x;
+            const ballY = ball.y;
+
+            // 最近点
+            const closestX = Math.max(brickLeft, Math.min(ballX, brickRight));
+            const closestY = Math.max(brickTop, Math.min(ballY, brickBottom));
+            const dx = ballX - closestX;
+            const dy = ballY - closestY;
+            const distSq = dx * dx + dy * dy;
+            return distSq <= ball.r * ball.r;
+        }
+
+        // ---------- 处理砖块碰撞并反弹方向 (简化: 根据重叠方向反转速度) ----------
+        function handleBrickCollision(brick) {
+            // 计算球与砖块中心相对位置
+            const brickCenterX = brick.x + brick.w / 2;
+            const brickCenterY = brick.y + brick.h / 2;
+            const diffX = ball.x - brickCenterX;
+            const diffY = ball.y - brickCenterY;
+
+            // 判断从哪个方向撞击 (基于重叠深度)
+            const overlapX = (brick.w / 2 + ball.r) - Math.abs(diffX);
+            const overlapY = (brick.h / 2 + ball.r) - Math.abs(diffY);
+
+            if (overlapX < overlapY) {
+                // 水平方向碰撞
+                ball.dx = -ball.dx;
+                // 轻微推出防止卡住
+                if (diffX > 0) ball.x = brick.x + brick.w + ball.r + 0.5;
+                else ball.x = brick.x - ball.r - 0.5;
+            } else {
+                // 垂直方向碰撞
+                ball.dy = -ball.dy;
+                if (diffY > 0) ball.y = brick.y + brick.h + ball.r + 0.5;
+                else ball.y = brick.y - ball.r - 0.5;
+            }
+        }
+
+        // ---------- 更新物理 (仅在 gameActive 时调用) ----------
+        function updatePhysics() {
+            // 1. 移动挡板(键盘状态在外部事件中处理, 但为了流畅我们可以在这里基于keys对象移动)
+            //    已在keydown/keyup里直接修改paddleX, 无需重复
+
+            // 2. 移动球
+            ball.x += ball.dx / 1.7;
+            ball.y += ball.dy / 1.7;
+
+            // 3. 左右的墙壁碰撞
+            if (ball.x - ball.r < 0) {
+                ball.x = ball.r;
+                ball.dx = -ball.dx;
+            } else if (ball.x + ball.r > CW) {
+                ball.x = CW - ball.r;
+                ball.dx = -ball.dx;
+            }
+
+            // 4. 顶部碰撞 (天花板)
+            if (ball.y - ball.r < 0) {
+                ball.y = ball.r;
+                ball.dy = -ball.dy;
+            }
+
+            // 5. 挡板碰撞 (只有球向下运动时才检测)
+            if (ball.dy > 0 && ball.y + ball.r >= PADDLE_Y &&
+                ball.y - ball.r <= PADDLE_Y + PADDLE_H &&
+                ball.x + ball.r >= paddleX && ball.x - ball.r <= paddleX + PADDLE_W) {
+
+                // 球碰到挡板顶部, 计算反弹角度
+                // 根据球击中挡板的位置改变水平速度
+                const hitPos = (ball.x - paddleX) / PADDLE_W; // 0~1
+                const angle = (hitPos - 0.5) * 1.4; // -0.7 ~ 0.7 弧度
+
+                // 保持总速度不变 (原速度大小)
+                const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                // 新方向: 向上为主, 根据角度偏转
+                const newDx = Math.sin(angle) * speed;
+                const newDy = -Math.cos(angle) * speed;
+
+                ball.dx = newDx;
+                ball.dy = newDy;
+
+                // 把球放到挡板上方避免卡住
+                ball.y = PADDLE_Y - ball.r - 0.5;
+            }
+
+            // 6. 底部掉落检测 (掉到底部: 球中心超出画布底部或碰到)
+            if (ball.y - ball.r > CH) {
+                // 掉到底部: 重置球位置到中间, 分数保持不变
+                resetBall();
+                // 注意: 挡板位置保留, 不清分数
+                // 但为了不让球连续掉落, 重置后球y在挡板上方, 立即有速度
+                // 这里resetBall已经设置位置和速度
+                // 不需要额外操作
+            }
+
+            // 7. 砖块碰撞检测 (遍历所有激活砖块)
+            for (let i = 0; i < bricks.length; i++) {
+                const brick = bricks[i];
+                if (!brick.active) continue;
+
+                if (ballCollidesWithBrick(brick)) {
+                    // 消除砖块
+                    brick.active = false;
+                    score += 10;
+                    updateScore();
+
+                    // 处理反弹 (方向调整)
+                    handleBrickCollision(brick);
+
+                    // 一帧只处理一个砖块碰撞，防止多个碰撞导致速度紊乱
+                    break;
+                }
+            }
+
+            // 8. 检查是否所有砖块都被消除 -> 可选的胜利状态 (但是可以继续玩, 分数保留; 这里没有特殊处理, 只是没砖块可打)
+            //    为了使游戏更有趣, 如果砖块全部消除, 可以重新生成? 但需求没要求, 可以保持, 用户可点新游戏.
+            //    不额外处理。
+        }
+
+        // ---------- 绘制 ----------
+        function draw() {
+            ctx.clearRect(0, 0, CW, CH);
+
+            // 绘制网格/氛围 (简单的暗纹)
+            ctx.strokeStyle = "#1d2439";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < CW; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, CH);
+                ctx.strokeStyle = "#1a1f30";
+                ctx.stroke();
+            }
+            for (let i = 0; i < CH; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(CW, i);
+                ctx.strokeStyle = "#1a1f30";
+                ctx.stroke();
+            }
+
+            // 绘制砖块 (活跃)
+            bricks.forEach(b => {
+                if (!b.active) return;
+                // 圆角矩形
+                const radius = 6;
+                ctx.beginPath();
+                ctx.moveTo(b.x + radius, b.y);
+                ctx.lineTo(b.x + b.w - radius, b.y);
+                ctx.quadraticCurveTo(b.x + b.w, b.y, b.x + b.w, b.y + radius);
+                ctx.lineTo(b.x + b.w, b.y + b.h - radius);
+                ctx.quadraticCurveTo(b.x + b.w, b.y + b.h, b.x + b.w - radius, b.y + b.h);
+                ctx.lineTo(b.x + radius, b.y + b.h);
+                ctx.quadraticCurveTo(b.x, b.y + b.h, b.x, b.y + b.h - radius);
+                ctx.lineTo(b.x, b.y + radius);
+                ctx.quadraticCurveTo(b.x, b.y, b.x + radius, b.y);
+                ctx.closePath();
+
+                // 填充
+                ctx.fillStyle = b.color;
+                ctx.fill();
+                // 高光
+                ctx.shadowColor = "rgba(255, 255, 255, 0.4)";
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = b.lightColor;
+                ctx.globalAlpha = 0.6;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1.0;
+
+                // 边框
+                ctx.strokeStyle = "#ffffff40";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+
+            // 绘制挡板 (渐变)
+            const paddleGrad = ctx.createLinearGradient(paddleX, PADDLE_Y, paddleX, PADDLE_Y + PADDLE_H);
+            paddleGrad.addColorStop(1, "#3f8ec9");
+            ctx.shadowColor = "#3f9eff";
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = paddleGrad;
+            ctx.beginPath();
+            ctx.roundRect(paddleX, PADDLE_Y, PADDLE_W, PADDLE_H, 10);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // 边缘高光
+            ctx.strokeStyle = "#c0e4ff";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 绘制球 (发光)
+            ctx.shadowColor = "#aaddff";
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+            // 球体渐变
+            const ballGrad = ctx.createRadialGradient(ball.x-3, ball.y-3, 2, ball.x, ball.y, ball.r+3);
+            ballGrad.addColorStop(1, "#a2d2ff");
+            ctx.fillStyle = ballGrad;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // 边框
+            ctx.strokeStyle = "#ffffffc0";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 如果暂停, 画半透明遮罩和提示
+            if (!gameActive) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillRect(0, 0, CW, CH);
+                ctx.fillStyle = "#eef5ff";
+                ctx.font = "bold 42px 'Segoe UI', Roboto, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.shadowColor = "#00000080";
+                ctx.shadowBlur = 0;
+                ctx.fillText("⏸ 暂停", CW/2, CH/2 - 20);
+                ctx.font = "bold 20px 'Segoe UI', sans-serif";
+                ctx.fillStyle = "#b0c8e0";
+                ctx.fillText("按空格或点击按钮继续", CW/2, CH/2 + 50);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // 画布圆角矩形辅助方法 (CanvasRenderingContext2D 已支持roundRect, 但加一个后备)
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x + r, y);
+                this.lineTo(x + w - r, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + r);
+                this.lineTo(x + w, y + h - r);
+                this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                this.lineTo(x + r, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - r);
+                this.lineTo(x, y + r);
+                this.quadraticCurveTo(x, y, x + r, y);
+                return this;
+            };
+        }
+
+        // ---------- 动画循环 ----------
+        function gameLoop() {
+            if (gameActive) {
+                updatePhysics();
+            }
+            draw();
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        // ---------- 键盘控制 ----------
+        let leftPressed = false;
+        let rightPressed = false;
+
+        function handleKeyDown(e) {
+            const key = e.key;
+            // 防止页面滚动/空格按下弹窗
+            if (key === " " || key === "Spacebar" || key === "Space") {
+                e.preventDefault();
+                togglePause();
+                return;
+            }
+            if (key === "ArrowLeft" || key === "Left" || key === "a" || key === "A") {
+                e.preventDefault();
+                leftPressed = true;
+            } else if (key === "ArrowRight" || key === "Right" || key === "d" || key === "D") {
+                e.preventDefault();
+                rightPressed = true;
+            }
+        }
+
+        function handleKeyUp(e) {
+            const key = e.key;
+            if (key === "ArrowLeft" || key === "Left" || key === "a" || key === "A") {
+                e.preventDefault();
+                leftPressed = false;
+            } else if (key === "ArrowRight" || key === "Right" || key === "d" || key === "D") {
+                e.preventDefault();
+                rightPressed = false;
+            }
+            // 空格放开无需操作
+        }
+
+        // 移动挡板的更新 (每帧调用, 基于键盘状态)
+        function updatePaddle() {
+            if (leftPressed) {
+                paddleX = Math.max(0, paddleX - PADDLE_SPEED);
+            }
+            if (rightPressed) {
+                paddleX = Math.min(CW - PADDLE_W, paddleX + PADDLE_SPEED);
+            }
+        }
+
+        // 将挡板移动插入到物理更新之前 (增强手感)
+        const originalUpdatePhysics = updatePhysics;
+        updatePhysics = function() {
+            updatePaddle();        // 先处理键盘挡板移动
+            originalUpdatePhysics.call(this);
+        };
+
+        // ---------- 事件绑定 ----------
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        // 按钮事件
+        pauseBtn.addEventListener('click', togglePause);
+        resetBtn.addEventListener('click', () => {
+            resetGame();
+            // 重置后确保按钮状态与gameActive同步(如果重置前是暂停, resetGame内会将gameActive置true)
+            updatePauseButton();
+        });
+
+        // 防止画布外点击时键盘卡键 (可选)
+        window.addEventListener('blur', () => {
+            leftPressed = false;
+            rightPressed = false;
+        });
+
+        // 鼠标不显示在canvas上(已在样式里cursor:none)
+
+        // ---------- 启动游戏 ----------
+        function startGame() {
+            initBricks();
+            resetBall();
+            updateScore();
+            gameActive = true;
+            updatePauseButton();
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        // 覆盖resetGame, 让它执行完整重置
+        const originalResetGame = resetGame;
+        resetGame = function() {
+            score = 0;
+            updateScore();
+            paddleX = (CW - PADDLE_W) / 2;
+            initBricks();
+            resetBall();
+            gameActive = true;
+            updatePauseButton();
+            // 不需要重启循环, 循环一直在运行
+        };
+
+        // 初始化并启动
+        startGame();
+    })();
+</script>
+</body>
+</html>

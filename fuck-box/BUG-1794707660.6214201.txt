@@ -1,0 +1,2 @@
+type: BUG
+msg: 测试

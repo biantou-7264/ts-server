@@ -1,0 +1,92 @@
+import requests
+from flask import *
+
+app = Flask(__name__)
+
+
+@app.route('/')
+def home():
+    return send_from_directory('.', 'index.html')
+
+
+@app.route('/say_room', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def proxy_a():
+    print(111)
+    url = 'http://127.0.0.1:14258'
+    resp = requests.request(
+        method=request.method,
+        url=url,
+        headers={k: v for k, v in request.headers if k != 'Host'},
+        data=request.get_data(),
+        cookies=request.cookies,
+        allow_redirects=False,
+    )
+    return Response(resp.content, resp.status_code, resp.headers.items())
+
+
+@app.route('/api/get-saies', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def proxy_b():
+    print(111)
+    url = 'http://127.0.0.1:14258/api/get-saies'
+    resp = requests.request(
+        method=request.method,
+        url=url,
+        headers={k: v for k, v in request.headers if k != 'Host'},
+        data=request.get_data(),
+        cookies=request.cookies,
+        allow_redirects=False,
+    )
+    return Response(resp.content, resp.status_code, resp.headers.items())
+
+
+@app.route('/api/send-message', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def proxy_c():
+    print(111)
+    url = 'http://127.0.0.1:14258/api/send-message'
+    resp = requests.request(
+        method=request.method,
+        url=url,
+        headers={k: v for k, v in request.headers if k != 'Host'},
+        data=request.get_data(),
+        cookies=request.cookies,
+        allow_redirects=False,
+    )
+    return Response(resp.content, resp.status_code, resp.headers.items())
+
+
+@app.route('/mc', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def proxy_d():
+    print(222)
+    url = 'http://127.0.0.1:23456'
+    resp = requests.request(
+        method=request.method,
+        url=url,
+        headers={k: v for k, v in request.headers if k != 'Host'},
+        data=request.get_data(),
+        cookies=request.cookies,
+        allow_redirects=False,
+    )
+    return Response(resp.content, resp.status_code, resp.headers.items())
+
+
+@app.route('/python-rumen')
+def python_rumen():
+    return send_from_directory('.', 'python-rumen.html')
+
+
+@app.route('/admin')
+def admin_login():
+    return send_from_directory('.', 'admin/index.html')
+
+
+@app.route('/ollamaSetup.exe.download')
+def download_ollama_setup_exe():
+    return send_from_directory('.', 'ollamaSetup-download.html')
+
+
+@app.route('/ollamaSetup.exe')
+def ollama_setup():
+    return send_file('./ollamaSetup.exe', as_att
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=22334, threaded=True)

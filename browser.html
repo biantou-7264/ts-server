@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>简易浏览器</title>
+
+    <style>
+        body {
+            background: #000032;
+        }
+
+        h1 {
+            font-size: 35px;
+            color: #ffffff;
+            margin: 10px;
+        }
+
+        input[type='text'] {
+            background: #006400;
+            border: 2px solid #00af00;
+            width: 97%;
+            height: 40px;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 20px;
+        }
+
+        input[type='text']:focus {
+            outline: none;
+            border: 2px solid #00ff00;
+        }
+
+        button {
+            background: #00c800;
+            border: 2px solid #006400;
+            font-size: 30px;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background: #00ff00;
+            border: 2px solid #00c800;
+        }
+
+        button:active {
+            background: #006400;
+            border: 2px solid #00c800;
+        }
+
+        div {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: auto;
+        }
+
+        p {
+            font-size: 20px;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<h1>简易浏览器</h1>
+<div>
+    <input type="text" placeholder="输入网址或者搜索" id="url">
+    <button onclick="loadUrl()">&gt;</button>
+</div>
+<iframe src="https://tx.tail349355.ts.net" id="iframe"></iframe>
+<p>因为浏览器限制, 没法显示不给嵌套的网页, 比如X-Frame-Options设为sameorigin</p>
+
+<script>
+    function loadUrl() {
+        const url = document.getElementById('url').value;
+        if (url === '') {
+            document.getElementById('iframe').src = 'https://tx.tail349355.ts.net';
+        } else if (url.includes('.')) {
+            document.getElementById('iframe').src = 'https://' + url;
+        } else if (url.startsWith('http')) {
+            document.getElementById('iframe').src = url;
+        } else {
+            document.getElementById('iframe').src = 'https://www.bing.com/search?q=' + url;
+        }
+    }
+</script>
+</body>
+</html>
