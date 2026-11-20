@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>网站后台</title>
 
+    <!--suppress CssUnusedSymbol -->
     <style>
         body {
             background-color: #000000;
@@ -12,11 +13,178 @@
 
         h1 {
             color: #ffffff;
-            font-size: 50px;
+            font-size: 40px;
+        }
+
+        button {
+            margin: 10px;
+            color: white;
+            background-color: transparent;
+            border-radius: 3px;
+            border: 2px solid #00ff00;
+            cursor: pointer;
+            font-size: 24px;
+            transition: 0.05s transform;
+        }
+
+        button:hover {
+            border: 2px solid #ff0000;
+        }
+
+        button:active {
+            border: #0000ff 2px solid;
+        }
+
+        div.container {
+            background-color: #323200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 10px;
+        }
+
+        input {
+            background-color: transparent;
+            border: 2px solid #00ff00;
+            color: #ffffff;
+            font-size: 24px;
+            margin: 10px;
+            border-radius: 3px;
+        }
+
+        input:focus {
+            border: 2px solid #ff0000;
+            outline: none;
+        }
+
+        div.tips {
+            top: 20px;
+            left: 20px;
+            position: absolute;
+            background-color: rgba(255, 0, 255, 0.6);
+            width: 300px;
+            height: auto;
+            text-align: left;
+            color: white;
+            font-size: 20px;
+            padding: 5px;
+            border: 1px solid #00ff00;
+            border-radius: 3px;
+        }
+
+        div.tips p {
+            margin: 0;
+        }
+
+        dialog {
+            background-color: #000032;
+            border: 1px dashed #ff0000;
+            width: 400px;
+            height: 200px;
+            border-radius: 3px;
+            color: white;
+            position: fixed;
+            text-align: center;
+        }
+
+        dialog h1 {
+            font-size: 35px;
+        }
+
+        dialog button {
+            font-size: 30px;
         }
     </style>
 </head>
 <body>
-<h1>网站后台</h1>
+<h1>网站控制台</h1>
+<div class="container">
+    <input id="password" type="password" placeholder="请填入你的通行密钥">
+</div>
+<div class="container">
+    <button onclick="deleteBanIpConfirm()">清除ban ip记录</button>
+    <button onclick="restartServiceConfirm()">重启服务</button>
+</div>
+
+<dialog id="deleteBanIpConfirmDialog">
+    <h1>你确定要清除ban ip记录?</h1>
+    <button onclick="document.getElementById('deleteBanIpConfirmDialog').close()">NO</button>
+    <button onclick="deleteBanIp()">YES</button>
+</dialog>
+
+<dialog id="restartServiceConfirmDialog">
+    <h1>你确定要重启服务?</h1>
+    <button onclick="document.getElementById('restartServiceConfirmDialog').close()">NO</button>
+    <button onclick="restartService()">YES</button>
+</dialog>
+
+<script>
+    function deleteBanIpConfirm() {
+        document.getElementById('deleteBanIpConfirmDialog').showModal();
+    }
+
+    function restartServiceConfirm() {
+        document.getElementById('restartServiceConfirmDialog').showModal();
+    }
+
+    function restartService() {
+        (async function () {
+            try {
+                document.getElementById('restartServiceConfirmDialog').close();
+                let response = await fetch('/restart-service', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({'passcode': document.getElementById('password').value})
+                })
+                let text = await response.text()
+                let tips = document.createElement('div')
+                tips.className = 'tips'
+                tips.innerHTML = '<p>' + text + '</p>'
+                document.body.appendChild(tips)
+                setTimeout(() => {
+                    tips.remove()
+                }, 3000)
+            } catch (error) {
+                let tips = document.createElement('div')
+                tips.className = 'tips'
+                tips.innerHTML = '<p>' + error + '</p>'
+                document.body.appendChild(tips)
+                setTimeout(() => {
+                    tips.remove()
+                }, 3000)
+            }
+        })();
+    }
+
+    function deleteBanIp() {
+        (async function () {
+            try {
+                document.getElementById('deleteBanIpConfirmDialog').close();
+                let response = await fetch('/del-ban-ip', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({'passcode': document.getElementById('password').value})
+                })
+                let text = await response.text()
+                let tips = document.createElement('div')
+                tips.className = 'tips'
+                tips.innerHTML = '<p>' + text + '</p>'
+                document.body.appendChild(tips)
+                setTimeout(() => {
+                    tips.remove()
+                }, 3000)
+            } catch (error) {
+                let tips = document.createElement('div')
+                tips.className = 'tips'
+                tips.innerHTML = '<p>' + error + '</p>'
+                document.body.appendChild(tips)
+                setTimeout(() => {
+                    tips.remove()
+                }, 3000)
+            }
+        })();
+    }
+</script>
 </body>
 </html>

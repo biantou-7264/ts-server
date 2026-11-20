@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from traceback import format_exc
 
@@ -437,6 +438,37 @@ def no_click_page():
 @app.route('/lianxi_me')
 def lianxi_me():
     return send_from_directory('.', 'lianxi_me.html')
+
+@app.route('/del-ban-ip', methods=['POST'])
+def del_ban_ip():
+    json = request.get_json()
+    passcode = json['passcode']
+    if passcode == 'Szbt2015':
+        try:
+            with open('/Users/luojingfeng/html-project/ts-server/ban_ip.txt', 'w') as f:
+                f.write('')
+        except Exception:
+            print(format_exc())
+            return 'ERROR', 500
+    else:
+        return '密钥错误', 403
+    return 'OK', 200
+
+@app.route('/restart-service', methods=['POST'])
+def restart_service():
+    print('restart service')
+    json = request.get_json()
+    passcode = json['passcode']
+    if passcode == 'Szbt2015':
+        try:
+            ip = get_real_ip()
+            print('%s要求重启' % ip)
+            sys.exit()
+        except Exception:
+            print(format_exc())
+            return 'ERROR', 500
+    else:
+        return '密钥错误', 403
 
 
 if __name__ == '__main__':
