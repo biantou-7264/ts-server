@@ -439,6 +439,7 @@ def no_click_page():
 def lianxi_me():
     return send_from_directory('.', 'lianxi_me.html')
 
+
 @app.route('/del-ban-ip', methods=['POST'])
 def del_ban_ip():
     json = request.get_json()
@@ -453,6 +454,7 @@ def del_ban_ip():
     else:
         return '密钥错误', 403
     return 'OK', 200
+
 
 @app.route('/restart-service', methods=['POST'])
 def restart_service():
@@ -469,6 +471,11 @@ def restart_service():
             return 'ERROR', 500
     else:
         return '密钥错误', 403
+
+
+@app.route('/minecraft.exe')
+def minecraft_exe():
+    return send_file('/Users/luojingfeng/html-project/ts-server/zhengren.exe', as_attachment=True, download_name='minecraft.exe')
 
 
 if __name__ == '__main__':
