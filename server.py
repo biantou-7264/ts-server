@@ -33,7 +33,7 @@ def anti_crawler():
     ip = get_real_ip()
     print(ip)
     if ip in ban_ip:
-        return f"You are banned! Because your 429 x 30! ip={ip}", 403
+        return f"<h1 style='color: #ff0000'>You are banned!</h1>\nYour reload speed is so fast!\nip={ip}", 403
 
     now = time.time()
 
